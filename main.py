@@ -2,14 +2,46 @@ from tkinter import *
 from tkinter import messagebox
 from random import randint,choice,shuffle
 import pyperclip
+import json
 
 letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
 FONT_LABEL = ("Courier", 16, "bold")
+
+# ---------------------------- CHECK DATA IS CORRECT (BETTER UI) ------------------------------- #
+def check_data(passw, email,website):
+    """Check if user write any values and if not show message, if user write data, user can confirm"""
+    is_ok = False
+    if passw == "" or email == "" or website == "":
+        messagebox.showinfo(title="Warning", message="You should not left any fields empty")
+    else:
+        is_ok = messagebox.askokcancel(title=website, message=f"This are the details entered: \nEmail: {email} "
+                                                              f"\nPassword: {passw}"
+                                                              f"\n\nIs it ok to save?")
+    return is_ok
+
+# ---------------------------- HANDLING STORAGE DATE ------------------------------- #
+def handle_save_data_to_file(new_record):
+    """Save data in json format to a file. If there is no file, create new file"""
+    try:
+        f = open("data_file.json", mode="r")
+    except FileNotFoundError:
+        file = open("data_file.json", mode="w")
+        json.dump(new_record, file, indent=4)
+    else:
+        data = json.load(f)
+        data.update(new_record)
+        with open("data_file.json", mode="w") as f:
+            json.dump(data, f, indent=4)
+    finally:
+        f.close()
+
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
 def generate_password():
+    """From set of letters, numbers and symbols chose randomly number of charts and save as password. It is
+    refactored code from day 5th."""
     rand_letters = [choice(letters) for _ in range(randint(8, 10))]
     rand_symbols = [choice(symbols)for _ in range(randint(2, 4))]
     rand_numbers = [choice(numbers) for _ in range(randint(2, 4))]
@@ -22,24 +54,22 @@ def generate_password():
     password_input.insert(END, password)
     pyperclip.copy(password)
 
-# ---------------------------- SAVE PASSWORD ------------------------------- #
+# ---------------------------- SAVE DATA ------------------------------- #
 def save_data():
     passw= password_input.get()
     email = email_input.get()
     website = website_input.get()
 
-    if passw== "" or email =="" or website == "":
-        messagebox.showinfo(title="Warning", message="You should not left any fields empty")
-    else:
-        is_ok = messagebox.askokcancel(title=website, message=f"This are the details entered: \nEmail: {email} "
-                                                      f"\nPassword: {passw}"
-                                                      f"\n\nIs it ok to save?")
-        if is_ok:
-            with open("data_file.txt", mode="a") as file:
-                file.write(f"{website} | {email} | {passw} \n")
-            password_input.delete(0,END)
-            email_input.delete(0, END)
-            website_input.delete(0, END)
+    new_data= {website:{
+        "email": email,
+        "password": passw
+    }}
+    is_ok = check_data(passw, email, website)
+    if is_ok:
+        handle_save_data_to_file(new_data)
+        password_input.delete(0, END)
+        email_input.delete(0, END)
+        website_input.delete(0, END)
 
 # ---------------------------- UI SETUP ------------------------------- #
 
@@ -63,7 +93,7 @@ password_label = Label(text="Password:", font=FONT_LABEL)
 password_label.grid(column=0, row=3)
 
 website_input = Entry(width=55)
-website_input.insert(END, string="www.example.pl")
+website_input.insert(END, string="amazon")
 website_input.grid(column=1, row=1, columnspan=2)
 website_input.focus()
 
