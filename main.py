@@ -9,6 +9,35 @@ numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
 FONT_LABEL = ("Courier", 16, "bold")
 
+# ---------------------------- SEARCH WEBSITE NAME AND PRINT INTO MESSAGE BOX------------------------------- #
+def search_website_name(website_name):
+    if website_name != "":
+        website_name=website_name.lower()
+        try:
+            file = open("data_file.json", "r")
+        except FileNotFoundError:
+            messagebox.showinfo(message="You should put any record first.", title="Warning")
+            file = open("data_file.txt", "w")
+        else:
+            data = json.load(file)
+            try:
+                record = data[f"{website_name}"]
+            except KeyError:
+                messagebox.showinfo(message=f"Sorry, there is no website like: {website_name}")
+            else:
+                messagebox.showinfo(title=f"{website_name}", message=f"Your email: {record["email"]}\n"
+                                                                 f"Your password: {record["password"]}")
+        finally:
+            file.close()
+    else:
+        messagebox.showinfo(message="Website field should not be empty.", title="Warning")
+
+
+def handle_search_button():
+    website = website_input.get()
+    search_website_name(website)
+
+
 # ---------------------------- CHECK DATA IS CORRECT (BETTER UI) ------------------------------- #
 def check_data(passw, email,website):
     """Check if user write any values and if not show message, if user write data, user can confirm"""
@@ -25,17 +54,17 @@ def check_data(passw, email,website):
 def handle_save_data_to_file(new_record):
     """Save data in json format to a file. If there is no file, create new file"""
     try:
-        f = open("data_file.json", mode="r")
+        file = open("data_file.json", mode="r")
     except FileNotFoundError:
         file = open("data_file.json", mode="w")
         json.dump(new_record, file, indent=4)
     else:
-        data = json.load(f)
+        data = json.load(file)
         data.update(new_record)
-        with open("data_file.json", mode="w") as f:
-            json.dump(data, f, indent=4)
+        with open("data_file.json", mode="w") as file:
+            json.dump(data, file, indent=4)
     finally:
-        f.close()
+        file.close()
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
@@ -58,7 +87,7 @@ def generate_password():
 def save_data():
     passw= password_input.get()
     email = email_input.get()
-    website = website_input.get()
+    website = website_input.get().lower()
 
     new_data= {website:{
         "email": email,
@@ -92,9 +121,8 @@ email_label.grid(column=0, row=2)
 password_label = Label(text="Password:", font=FONT_LABEL)
 password_label.grid(column=0, row=3)
 
-website_input = Entry(width=55)
-website_input.insert(END, string="amazon")
-website_input.grid(column=1, row=1, columnspan=2)
+website_input = Entry(width=36)
+website_input.grid(column=1, row=1)
 website_input.focus()
 
 email_input = Entry(width=55)
@@ -106,6 +134,10 @@ password_input.grid(column=1, row=3)
 
 generate_password_button = Button(text="generate password", command=generate_password)
 generate_password_button.grid(column=2, row=3)
+
+search_button = Button(text="search", command=handle_search_button, width=14)
+search_button.grid(column=2, row=1)
+
 
 add_button = Button(text="add", width=46, command=save_data)
 add_button.grid(column=1, row=4, columnspan=2)
